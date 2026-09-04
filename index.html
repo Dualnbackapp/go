@@ -1,1 +1,40 @@
-<!doctype html><meta charset="utf-8"><title>LIFE OS</title><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=https://jade-bean-subscriptions-rough.trycloudflare.com"><script>location.replace("https://jade-bean-subscriptions-rough.trycloudflare.com")</script><p style="font-family:system-ui;padding:40px"><a href="https://jade-bean-subscriptions-rough.trycloudflare.com">Ouvrir le dashboard</a>
+<!doctype html><meta charset="utf-8"><title>LIFE OS</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Page permanente. Elle ne contient AUCUNE adresse en dur : l'adresse vivante
+     est lue à chaque ouverture depuis raw.githubusercontent (non mis en cache),
+     ce qui évite le cache de 10 min de GitHub Pages et l'ERROR 1016 de Cloudflare. -->
+<style>
+ :root{color-scheme:light}
+ body{font-family:-apple-system,system-ui,sans-serif;background:#f7f8fa;color:#0f172a;
+      display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px}
+ h1{font-size:19px;margin:0 0 10px;font-weight:650}
+ p{color:#475569;margin:6px 0;font-size:15px;line-height:1.5}
+ a{color:#1B45D7;font-weight:600;text-decoration:none}
+ .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#1B45D7;
+      margin-right:6px;animation:b 1.2s infinite}
+ @keyframes b{0%,100%{opacity:.25}50%{opacity:1}}
+</style>
+<div>
+  <h1 id="t"><span class="dot"></span>Ouverture du dashboard…</h1>
+  <p id="s">Recherche de l'adresse actuelle.</p>
+  <p>Sur le Wi-Fi de la maison : <a href="http://192.168.1.18:3000">192.168.1.18:3000</a></p>
+</div>
+<script>
+const SRC = "https://raw.githubusercontent.com/Dualnbackapp/go/main/url.txt";
+const t = document.getElementById("t"), s = document.getElementById("s");
+let tries = 0;
+async function go(){
+  tries++;
+  try{
+    const r = await fetch(SRC + "?t=" + Date.now(), {cache:"no-store"});
+    if(r.ok){
+      const u = (await r.text()).trim();
+      if(u.startsWith("http")){ location.replace(u); return; }
+    }
+  }catch(e){}
+  t.innerHTML = '<span class="dot"></span>Reconnexion du tunnel en cours…';
+  s.textContent = "Le Mac remet le tunnel en route. Cette page t'y emmène toute seule dès qu'il répond (essai " + tries + ").";
+  setTimeout(go, 10000);
+}
+go();
+</script>
