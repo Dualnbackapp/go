@@ -20,12 +20,22 @@
 <div>
   <h1 id="t"><span class="dot"></span>Ouverture du dashboard…</h1>
   <p id="s">Recherche de l'adresse actuelle.</p>
-  <p>Sur le Wi-Fi de la maison : <a href="http://192.168.1.18:3000">192.168.1.18:3000</a></p>
+  <p>Sur le Wi-Fi de la maison : <a id="lan" href="http://192.168.1.18:3000">192.168.1.18:3000</a></p>
 </div>
 <script>
 const API = "https://api.github.com/repos/Dualnbackapp/go/contents/url.txt";
 const RAW = "https://raw.githubusercontent.com/Dualnbackapp/go/main/url.txt";
+const LAN = "https://api.github.com/repos/Dualnbackapp/go/contents/lan.txt";
 const t = document.getElementById("t"), s = document.getElementById("s");
+
+// L'IP du Mac sur le Wi-Fi peut changer au gré du DHCP : on lit celle du moment.
+(async()=>{ try{
+  const r = await fetch(LAN + "?t=" + Date.now(), {cache:"no-store", headers:{Accept:"application/vnd.github.raw"}});
+  if(!r.ok) return;
+  const u = (await r.text()).trim();
+  if(u.startsWith("http")){ const a = document.getElementById("lan");
+    a.href = u; a.textContent = u.replace(/^https?:\/\//,""); }
+}catch(e){} })();
 let tries = 0;
 
 async function fetchUrl(useApi){
