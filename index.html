@@ -1,8 +1,11 @@
 <!doctype html><meta charset="utf-8"><title>LIFE OS</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- Page permanente. Elle ne contient AUCUNE adresse en dur : l'adresse vivante
-     est lue à chaque ouverture depuis raw.githubusercontent (non mis en cache),
-     ce qui évite le cache de 10 min de GitHub Pages et l'ERROR 1016 de Cloudflare. -->
+<!-- Page permanente : AUCUNE adresse en dur.
+     L'adresse vivante est lue à l'ouverture via l'API GitHub (cache 60 s, CORS ouvert)
+     et non via raw.githubusercontent (cache 5 min, insensible au cache-busting) ni via
+     GitHub Pages (cache 10 min) : c'est ce cache-là qui servait un lien mort et
+     faisait afficher « Error 1016 Origin DNS error » par Cloudflare.
+     raw sert seulement de filet si l'API est rationnée. -->
 <style>
  :root{color-scheme:light}
  body{font-family:-apple-system,system-ui,sans-serif;background:#f7f8fa;color:#0f172a;
@@ -11,7 +14,7 @@
  p{color:#475569;margin:6px 0;font-size:15px;line-height:1.5}
  a{color:#1B45D7;font-weight:600;text-decoration:none}
  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#1B45D7;
-      margin-right:6px;animation:b 1.2s infinite}
+      margin-right:7px;animation:b 1.2s infinite}
  @keyframes b{0%,100%{opacity:.25}50%{opacity:1}}
 </style>
 <div>
@@ -20,21 +23,33 @@
   <p>Sur le Wi-Fi de la maison : <a href="http://192.168.1.18:3000">192.168.1.18:3000</a></p>
 </div>
 <script>
-const SRC = "https://raw.githubusercontent.com/Dualnbackapp/go/main/url.txt";
+const API = "https://api.github.com/repos/Dualnbackapp/go/contents/url.txt";
+const RAW = "https://raw.githubusercontent.com/Dualnbackapp/go/main/url.txt";
 const t = document.getElementById("t"), s = document.getElementById("s");
 let tries = 0;
+
+async function fetchUrl(useApi){
+  const u = (useApi ? API : RAW) + "?t=" + Date.now();
+  const opt = {cache:"no-store"};
+  if(useApi) opt.headers = {Accept:"application/vnd.github.raw"};
+  const r = await fetch(u, opt);
+  if(!r.ok) throw 0;
+  return (await r.text()).trim();
+}
+
 async function go(){
   tries++;
-  try{
-    const r = await fetch(SRC + "?t=" + Date.now(), {cache:"no-store"});
-    if(r.ok){
-      const u = (await r.text()).trim();
+  // l'API (fraîche) au 1er essai puis 1 fois par minute ; raw entre-temps.
+  for(const useApi of (tries % 4 === 1 ? [true, false] : [false, true])){
+    try{
+      const u = await fetchUrl(useApi);
       if(u.startsWith("http")){ location.replace(u); return; }
-    }
-  }catch(e){}
+      break; // sentinelle « ATTENTE » : le tunnel est en cours de relance
+    }catch(e){}
+  }
   t.innerHTML = '<span class="dot"></span>Reconnexion du tunnel en cours…';
   s.textContent = "Le Mac remet le tunnel en route. Cette page t'y emmène toute seule dès qu'il répond (essai " + tries + ").";
-  setTimeout(go, 10000);
+  setTimeout(go, 15000);
 }
 go();
 </script>
